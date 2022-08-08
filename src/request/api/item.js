@@ -1,3 +1,4 @@
+// 管理item页面axios操作
 import service from "..";
 // 获取推荐歌单详情
 export function getItemList(id) {
@@ -16,9 +17,9 @@ export function getMusicList(id) {
 }
 
 // 获取歌词
-export function getMusicText(id) {
+export function getMusicLyr(id) {
     return service({
         method: 'GET',
-        url: `/playlist/track/all?id=${id}&limit=20`
+        url: `/lyric?id=${id}`
     })
 }

@@ -1,30 +1,43 @@
 <template>
+  <!-- 歌单详情页的上半部分 -->
   <div class="container">
+    <!-- 背景图片（模糊） -->
     <img :src="playlist.coverImgUrl" alt="" class="cover" />
+    <!-- 内容部分 -->
     <div class="item-content">
+      <!-- 左侧专辑图片 -->
       <img :src="playlist.coverImgUrl" alt="" class="pic" />
+      <!-- 右侧详情部分 -->
       <div class="text-container">
+        <!-- 歌单标题 -->
         <span class="title">{{ playlist.name }}</span>
+        <!-- 作者头像和名字 -->
         <div class="author">
           <img :src="playlist.creator.backgroundUrl" alt="" class="author" />
           <span>{{ playlist.creator.nickname }}</span>
         </div>
+        <!-- 歌单介绍 -->
         <div class="msg">{{ playlist.description }}</div>
       </div>
     </div>
+    <!-- 扩展按钮（待开发） -->
     <div class="more-nav">
+      <!-- 评论 -->
       <div class="nav-container">
         <span class="icon icon-message-square"></span>
         <span class="txt">{{ playlist.commentCount }}</span>
       </div>
+      <!-- 分享 -->
       <div class="nav-container">
         <span class="icon icon-share-2"></span>
         <span class="txt">{{ playlist.shareCount }}</span>
       </div>
+      <!-- 下载 -->
       <div class="nav-container">
         <span class="icon icon-download"></span>
         <span class="txt">下载</span>
       </div>
+      <!-- 多选 -->
       <div class="nav-container">
         <span class="icon icon-check-square"></span>
         <span class="txt">多选</span>

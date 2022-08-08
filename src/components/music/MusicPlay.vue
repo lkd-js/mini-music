@@ -1,5 +1,7 @@
 <template>
+  <!-- 底部播放模块，全局组件 -->
   <div class="footer-music">
+    <!-- 专辑图片（可旋转） -->
     <img
       ref="img"
       :src="playMusicList[playIndex].al.picUrl"
@@ -9,16 +11,17 @@
         active: !isBtnShow,
       }"
     />
-
+    <!-- 歌曲名字部分，跑马灯，点击弹出歌曲详情 -->
     <div class="song-name" @click="updatePopShow(true)">
       <van-notice-bar :text="playMusicList[playIndex].name" class="name" />
-      <span class="notice">横划切换歌曲</span>
+      <span class="notice">滑动切换</span>
     </div>
+    <!-- 播放模块 -->
     <div class="tool-btn">
       <span
         v-show="isBtnShow"
         class="icon icon-play-circle"
-        @click="play()"
+        @click="play(playMusicList[playIndex].id)"
       ></span>
       <span
         v-show="!isBtnShow"
@@ -27,10 +30,13 @@
       ></span>
       <span class="icon icon-indent"></span>
     </div>
+    <!-- 播放器 -->
     <audio
       ref="audio"
       :src="`https://music.163.com/song/media/outer/url?id=${playMusicList[playIndex].id}.mp3`"
+      @timeupdate="timeUp()"
     ></audio>
+    <!-- 底部弹出，歌曲详情模块MusicPop -->
     <van-popup
       v-model:show="isPopShow"
       position="bottom"
@@ -43,15 +49,16 @@
 
 <script>
 import MusicPop from "./MusicPop.vue";
-import { ref, watch, toRefs } from "vue";
+import { ref, watch, toRefs, onUpdated, onMounted } from "vue";
 import { useStore } from "vuex";
+
 export default {
   setup() {
     const store = useStore();
 
     // 获取store 中的states 并添加ref
     // 获取需要用到的state
-    const { playMusicList, playIndex, isBtnShow, isPopShow } = toRefs(
+    const { playMusicList, playIndex, isBtnShow, isPopShow, curTime } = toRefs(
       store.state
     );
 
@@ -59,13 +66,19 @@ export default {
     const {
       updateBtnShow: [updateBtnShow],
       updatePopShow: [updatePopShow],
+      updateTime: [updateTime],
     } = store._mutations;
+
+    // 获取需要用到的actions;
+    const {
+      getMusicTxt: [getMusicTxt],
+    } = store._actions;
 
     // 定义并用ref获取DOM元素，需要导出
     const audio = ref(null);
 
     // 自定义函数
-    const play = function () {
+    const play = () => {
       if (audio.value.paused) {
         audio.value.play();
         updateBtnShow(false);
@@ -74,8 +87,22 @@ export default {
         updateBtnShow(true);
       }
     };
+    // 根据播放器绑定获取并更新时间
+    const timeUp = () => {
+      let timeNow = audio.value.currentTime * 1000;
+      updateTime(timeNow);
+    };
 
-    //  添加监听器
+    // 生命周期，获取歌词
+    onUpdated(() => {
+      console.log("===更新歌词===");
+      getMusicTxt(playMusicList.value[playIndex.value].id);
+    });
+    onMounted(() => {
+      console.log("===获取默认歌词===");
+      getMusicTxt(playMusicList.value[playIndex.value].id);
+    });
+    //  添加监听器，控制播放状态
     watch(playIndex, () => {
       audio.value.autoplay = true;
       if (audio.value.paused) {
@@ -96,9 +123,12 @@ export default {
       playIndex,
       isBtnShow,
       isPopShow,
+      curTime,
       play,
       updateBtnShow,
       updatePopShow,
+      updateTime,
+      timeUp,
     };
   },
   components: { MusicPop },

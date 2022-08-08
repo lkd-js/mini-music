@@ -1,5 +1,8 @@
+<!-- 全局页面vm -->
 <template>
+  <!-- 页面显示 -->
   <router-view />
+  <!-- 底部播放器 -->
   <MusicPlay class="music" />
 </template>
 

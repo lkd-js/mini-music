@@ -1,5 +1,7 @@
 <template>
+  <!-- 歌曲列表模块 -->
   <div class="songs-container">
+    <!-- 列表头部 -->
     <div class="songs-top">
       <div class="left-container">
         <span class="icon icon-play-circle"></span>
@@ -10,16 +12,20 @@
         >+&nbsp;{{ getNum(playlist.subscribedCount) }}&nbsp;收藏</span
       >
     </div>
+    <!-- 歌曲 -->
     <div
       class="song-container"
       v-for="(song, index) in mystate.musiclist"
       :key="song.name"
     >
+      <!-- 索引 -->
       <span class="index">{{ index + 1 }}</span>
+      <!-- 歌曲名字 -->
       <div class="song-name" @click="addList(index)">
         <span class="name">{{ song.name }}</span>
         <span class="author">{{ song.ar[0].name }}</span>
       </div>
+      <!-- 歌曲控制模块,mv -->
       <div class="tool-btn">
         <span class="icon icon-bars"></span>
         <span class="icon icon-film" v-show="song.mv != 0"></span>
@@ -49,25 +55,27 @@ export default {
     });
 
     // 自定义函数
+    // 更新歌曲到当前播放
     const addList = (index) => {
       updatePlayList(mystate.musiclist);
       updatePlayIndex(index);
     };
+    // 收藏数处理
     const getNum = (num) => {
       return num > 10000 ? (num / 10000).toFixed(2) + "万" : num;
     };
 
-    // 定义生命周期函数
+    // 定义生命周期函数,获取歌单列表
     onMounted(async () => {
       const id = useRoute().query.id;
       if (!sessionStorage.getItem("music" + id)) {
         let res = await getMusicList(id);
-        console.log("获取歌单如下");
+        console.log("获取歌单res如下---↓");
         console.log(res);
         mystate.musiclist = res.data.songs;
         sessionStorage.setItem("music" + id, JSON.stringify(res.data.songs));
       } else {
-        console.log("已有歌单");
+        console.log("从session获取歌单中");
         mystate.musiclist = JSON.parse(sessionStorage.getItem("music" + id));
       }
     });

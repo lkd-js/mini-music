@@ -1,4 +1,5 @@
 <template>
+  <!-- 歌单详情页头部,固定定位 -->
   <div class="top-container">
     <div class="left-container">
       <span class="icon icon-arrow-left" @click="$router.go(-1)"></span>
@@ -15,9 +16,10 @@
 .top-container {
   width: 100%;
   height: 0.8rem;
-  background-color: rgba(34, 33, 33, 0.055);
+  background-color: rgba(34, 33, 33, 0.555);
   display: flex;
   justify-content: space-between;
+  z-index: 99;
 
   .left-container,
   .right-container {

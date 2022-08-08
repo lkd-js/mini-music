@@ -1,4 +1,5 @@
 <template>
+  <!-- home轮播图 -->
   <div id="swiper-container">
     <van-swipe :autoplay="3000" lazy-render indicator-color="#fac362">
       <van-swipe-item v-for="image in mystate.images" :key="image">
@@ -21,16 +22,17 @@ export default {
       ],
     });
 
-    // 自定义生命周期函数
+    // 自定义生命周期函数，获取轮播图res并存入session
     onMounted(async () => {
       let res;
       if (!sessionStorage.getItem("bannerImg")) {
         res = await getBanner();
+        console.log("获取banner的res如下---↓");
         console.log(res);
         mystate.images = res.data.banners;
         sessionStorage.setItem("bannerImg", JSON.stringify(res.data.banners));
       } else {
-        console.log("不用重复获取banner啦！");
+        console.log("从session获取banner中");
         mystate.images = JSON.parse(sessionStorage.getItem("bannerImg"));
       }
     });

@@ -1,3 +1,4 @@
+// 管理home页面axios操作
 import service from "..";
 
 // 获取轮播图数据

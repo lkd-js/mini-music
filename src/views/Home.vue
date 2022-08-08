@@ -1,7 +1,12 @@
+  <!-- HOME页面 -->
 <template>
+  <!-- 头部导航条 -->
   <TopNav />
+  <!-- 轮播图 -->
   <SwiperTop />
+  <!-- 图标导航条 -->
   <IconList />
+  <!-- 推荐歌单 -->
   <MusicList />
 </template>
 
