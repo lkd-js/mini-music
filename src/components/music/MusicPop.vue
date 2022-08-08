@@ -1,5 +1,5 @@
 <template>
-    <!-- 歌曲详情弹出容器 -->
+  <!-- 歌曲详情弹出容器 -->
   <div class="pop-container">
     <!-- 背景图片（模糊） -->
     <img :src="musicMsg.al.picUrl" alt="" class="bgc-img" />
@@ -15,9 +15,9 @@
     </div>
     <!-- 中间部分 -->
     <div class="contents-container">
-        <!-- 默认CD模式 -->
+      <!-- 默认CD模式 -->
       <div class="default-view" v-show="mystates.isPlayView">
-      <!-- 杆 -->
+        <!-- 杆 -->
         <img
           :class="{ bar: true, active: isBtnShow }"
           src="@/assets/bar.png"
@@ -41,51 +41,49 @@
           @click="checkView()"
         />
       </div>
-       <!-- 歌词模式 -->
-      <div class="music-view" v-show="!mystates.isPlayView">
+      <!-- 歌词模式 -->
+      <div class="music-view" v-show="!mystates.isPlayView" ref="spans">
         <!-- 返回按钮，点击切回CD模式 -->
-        <span class="checkLang icon-arrow-left" @click="checkView()"></span>
+        <span class="checkLang icon-circle" @click="checkView()"></span>
         <!-- 翻译按钮，点击切换歌词 -->
-        <span class="checkLang icon-language" @click="checkText"></span>
+        <span class="checkLang icon-language" @click="checkText()"></span>
         <!-- 原歌词（英文，日文，中文...） -->
         <div class="txt-container">
-            <!-- 标题作者 -->
+          <!-- 标题作者 -->
           <span>歌名：{{ musicMsg.name }}</span>
           <span>作者：{{ authorNames() }}</span>
           <!-- 歌词内容 -->
           <div
-            v-for="(conv1, i) in mystates.musicTxt.con1"
-            :key="`${i}xx`"
+            v-for="(conv1, i1) in getTimeRow.con1"
+            :key="`${i1}xx`"
             v-show="mystates.isLangDef"
+            :class="{
+              span: true,
+              active: i1 == musicRow,
+            }"
           >
-            <span
-              :class="{
-                active: i == retNum(mystates.musicTxt.time1, curTime),
-              }"
-              >{{ conv1 }}</span
-            >
+            {{ conv1 }}
           </div>
         </div>
         <!-- 翻译歌词，中文 -->
         <div class="txt-container">
           <div
-            v-for="(conv2, i) in mystates.musicTxt.con2"
-            :key="`${i}yy`"
+            v-for="(conv2, i2) in getTimeRow.con2"
+            :key="`${i2}yy`"
             v-show="!mystates.isLangDef"
+            :class="{
+              span: true,
+              active: i2 == musicRow2,
+            }"
           >
-            <span
-              :class="{
-                active: i == retNum(mystates.musicTxt.time2, curTime),
-              }"
-              >{{ conv2 }}</span
-            >
+            {{ conv2 }}
           </div>
         </div>
       </div>
     </div>
     <!-- 底部部分 -->
     <div class="footer-container">
-        <!-- 扩展按钮模块（待开发） -->
+      <!-- 扩展按钮模块（待开发） -->
       <div class="nav-com">
         <van-icon class="iconv" name="like-o" />
         <van-icon class="iconv" name="down" />
@@ -95,7 +93,14 @@
       <!-- 播放模块 -->
       <div class="player">
         <span class="icon icon-history"></span>
-        <span class="icon icon-step-backward"></span>
+        <span
+          class="icon icon-step-backward"
+          @click="
+            updatePlayIndex(
+              playIndex - 1 >= 0 ? playIndex - 1 : playMusicList.length - 1
+            )
+          "
+        ></span>
         <span
           v-show="isBtnShow"
           class="icon iconp icon-play-circle"
@@ -106,7 +111,14 @@
           class="icon iconp icon-pause-circle"
           @click="play()"
         ></span>
-        <span class="icon icon-step-forward"></span>
+        <span
+          class="icon icon-step-forward"
+          @click="
+            updatePlayIndex(
+              playIndex + 1 < playMusicList.length ? playIndex + 1 : 0
+            )
+          "
+        ></span>
         <span class="icon icon-indent"></span>
       </div>
     </div>
@@ -114,7 +126,7 @@
 </template>
 
 <script>
-import { reactive, toRefs } from "vue";
+import { reactive, toRefs, ref, toRef, watch } from "vue";
 import { useStore } from "vuex";
 
 export default {
@@ -122,23 +134,32 @@ export default {
     console.log(props.musicMsg);
     const store = useStore();
 
-    // 获取需要的state
-    const { isBtnShow, curTime, musicWord, musicWordPro } = toRefs(store.state);
+    // 获取歌词spanDOM
+    const spans = ref(null);
+
+    // 获取需要的state和getters
+    const {
+      isBtnShow,
+      curTime,
+      musicRow,
+      musicRow2,
+      playIndex,
+      playMusicList,
+    } = toRefs(store.state);
+
+    const getTimeRow = toRef(store.getters, "getTimeRow");
 
     // 获取需要用到的mutation
     const {
-      updateBtnShow: [updateBtnShow],
       updatePopShow: [updatePopShow],
+      updatePlayIndex: [updatePlayIndex],
     } = store._mutations;
 
     // 自定义属性
     const mystates = reactive({
       isPlayView: true,
       isLangDef: true,
-      musicTxt: {},
     });
-
-    // 自定义函数
 
     // 获取全部作者名并进行拼接
     const authorNames = () => {
@@ -160,68 +181,34 @@ export default {
       console.log("---切换歌词---");
       mystates.isLangDef = !mystates.isLangDef;
     };
-
-    // 确定当前歌词行数
-    const retNum = (arr, time) => {
-      let ars = arr.filter((v) => v < time);
-      let num = ars.length - 1;
-      //   console.log(num);
-      return num;
-    };
-
-    // 传入[time],转化为毫秒数
-    const checkTime = (arrStr) => {
-      let str1 = arrStr.replace("[", "");
-      let str2 = str1.replace("]", "");
-      const times = str2.split(":");
-      const time = Number(times[0]) * 60 * 1000 + Number(times[1] * 1000);
-      return time;
-    };
-
-    // 传入字符串，转化为时间和歌词两个数组 msTimeArr, conArr
-    const layout = (str) => {
-      // 根据换行符分句
-      const spanArr = str.split(/[(\r\n)\r\n]+/);
-      //   console.log(spanArr);
-      //定义时间数组 和 歌词数组
-      const timeArr = [];
-      const conArr = [];
-      spanArr.forEach((v) => {
-        const time = v.match(/\[[\s\S]+\]/);
-        if (time && time[0]) {
-          timeArr.push(time[0]);
-          let vt = v.replace(time[0], "");
-          conArr.push(vt);
-        }
-      });
-      // 定义毫秒时间数组
-      const msTimeArr = [];
-      timeArr.forEach((v, i) => {
-        let mstime = checkTime(v);
-        if (isNaN(mstime)) {
-          conArr.splice(i, 1);
-        } else {
-          msTimeArr.push(mstime);
-        }
-      });
-      return { msTimeArr, conArr };
-    };
-
-    // 把时间，歌词整合到一起
-    const { msTimeArr: time1, conArr: con1 } = layout(musicWord.value);
-    const { msTimeArr: time2, conArr: con2 } = layout(musicWordPro.value);
-    mystates.musicTxt = { time1, time2, con1, con2 };
+    // 歌詞滾動
+    watch(curTime, () => {
+      const acEl = document.querySelectorAll(".txt-container .active");
+      // console.log(acEl);
+      let hight;
+      if (mystates.isLangDef) {
+        acEl[0] == null ? (hight = 0) : (hight = acEl[0].offsetTop);
+        spans.value.scrollTop = hight - 250;
+      } else {
+        acEl[1] == null ? (hight = 0) : (hight = acEl[1].offsetTop);
+        spans.value.scrollTop = hight - 250;
+      }
+    });
 
     return {
       mystates,
+      spans,
       authorNames,
       checkView,
       checkText,
-      retNum,
       isBtnShow,
-      curTime,
-      updateBtnShow,
+      musicRow,
+      musicRow2,
       updatePopShow,
+      getTimeRow,
+      updatePlayIndex,
+      playIndex,
+      playMusicList,
     };
   },
   props: ["musicMsg", "play"],
@@ -325,6 +312,7 @@ export default {
       height: 100%;
       width: 100%;
       padding: 50% 0.4rem;
+      transition: all 1s ease;
       overflow: scroll;
       //   翻译按钮
       .checkLang {
@@ -337,7 +325,7 @@ export default {
         font-size: 0.5rem;
         z-index: 99;
         position: fixed;
-        top: 0.8rem;
+        top: 1.5rem;
       }
       .icon-language {
         right: 0.6rem;
@@ -348,8 +336,8 @@ export default {
       .txt-container {
         width: 100%;
         transition: all 1s ease;
+        .span,
         span {
-          display: block;
           width: 100%;
           height: 0.6rem;
           font-size: 0.28rem;
@@ -357,10 +345,10 @@ export default {
           text-align: center;
           margin-top: 0.2rem;
         }
-        span.active {
-          font-size: 0.32rem;
+        .span.active {
+          font-size: 0.36rem;
           font-weight: bolder;
-          color: rgba(255, 247, 0, 0.903);
+          color: rgba(0, 30, 255, 0.903);
         }
       }
     }

@@ -49,7 +49,7 @@
 
 <script>
 import MusicPop from "./MusicPop.vue";
-import { ref, watch, toRefs, onUpdated, onMounted } from "vue";
+import { ref, watch, toRefs, toRef, onUpdated, onMounted } from "vue";
 import { useStore } from "vuex";
 
 export default {
@@ -61,12 +61,15 @@ export default {
     const { playMusicList, playIndex, isBtnShow, isPopShow, curTime } = toRefs(
       store.state
     );
+    const getTimeRow = toRef(store.getters, "getTimeRow");
 
     // 获取需要用到的mutation
     const {
       updateBtnShow: [updateBtnShow],
       updatePopShow: [updatePopShow],
       updateTime: [updateTime],
+      updateMusicRow: [updateMusicRow],
+      updateMusicRow2: [updateMusicRow2],
     } = store._mutations;
 
     // 获取需要用到的actions;
@@ -87,10 +90,24 @@ export default {
         updateBtnShow(true);
       }
     };
-    // 根据播放器绑定获取并更新时间
+
+    // 更新当前歌词行数
+    const retNum = () => {
+      let arr = getTimeRow.value.time1.filter((v) => v < curTime.value);
+      let num = arr.length - 1;
+      updateMusicRow(num);
+    };
+    const retNum2 = () => {
+      let arr = getTimeRow.value.time2.filter((v) => v < curTime.value);
+      let num2 = arr.length - 1;
+      updateMusicRow2(num2);
+    };
+
     const timeUp = () => {
       let timeNow = audio.value.currentTime * 1000;
       updateTime(timeNow);
+      retNum();
+      retNum2();
     };
 
     // 生命周期，获取歌词
@@ -100,6 +117,9 @@ export default {
     });
     onMounted(() => {
       console.log("===获取默认歌词===");
+      // let listObj = getTimeRow.value;
+      // console.log("listObj=====");
+      // console.log(listObj);
       getMusicTxt(playMusicList.value[playIndex.value].id);
     });
     //  添加监听器，控制播放状态
