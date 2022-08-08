@@ -1,0 +1,163 @@
+<template>
+  <div class="songs-container">
+    <div class="songs-top">
+      <div class="left-container">
+        <span class="icon icon-play-circle"></span>
+        <span class="play">播放全部</span>
+        <span class="all">(共{{ mystate.musiclist.length }}首)</span>
+      </div>
+      <span class="add"
+        >+&nbsp;{{ getNum(playlist.subscribedCount) }}&nbsp;收藏</span
+      >
+    </div>
+    <div
+      class="song-container"
+      v-for="(song, index) in mystate.musiclist"
+      :key="song.name"
+    >
+      <span class="index">{{ index + 1 }}</span>
+      <div class="song-name" @click="addList(index)">
+        <span class="name">{{ song.name }}</span>
+        <span class="author">{{ song.ar[0].name }}</span>
+      </div>
+      <div class="tool-btn">
+        <span class="icon icon-bars"></span>
+        <span class="icon icon-film" v-show="song.mv != 0"></span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { onMounted, reactive } from "vue";
+import { useRoute } from "vue-router";
+import { useStore } from "vuex";
+import { getMusicList } from "@/request/api/item.js";
+export default {
+  setup() {
+    const store = useStore();
+
+    // 获取需要用到的mutation
+    const {
+      updatePlayList: [updatePlayList],
+      updatePlayIndex: [updatePlayIndex],
+    } = store._mutations;
+
+    // 自定义属性
+    const mystate = reactive({
+      musiclist: [],
+    });
+
+    // 自定义函数
+    const addList = (index) => {
+      updatePlayList(mystate.musiclist);
+      updatePlayIndex(index);
+    };
+    const getNum = (num) => {
+      return num > 10000 ? (num / 10000).toFixed(2) + "万" : num;
+    };
+
+    // 定义生命周期函数
+    onMounted(async () => {
+      const id = useRoute().query.id;
+      if (!sessionStorage.getItem("music" + id)) {
+        let res = await getMusicList(id);
+        console.log("获取歌单如下");
+        console.log(res);
+        mystate.musiclist = res.data.songs;
+        sessionStorage.setItem("music" + id, JSON.stringify(res.data.songs));
+      } else {
+        console.log("已有歌单");
+        mystate.musiclist = JSON.parse(sessionStorage.getItem("music" + id));
+      }
+    });
+
+    return { mystate, getNum, addList, updatePlayList, updatePlayIndex };
+  },
+  props: ["playlist"],
+};
+</script>
+
+<style lang="less" scoped>
+.songs-container {
+  width: 100%;
+  margin-top: 0.2rem;
+  padding-bottom: 1.2rem;
+  background-color: #fff;
+  border-top-left-radius: 0.4rem;
+  border-top-right-radius: 0.4rem;
+  .songs-top {
+    width: 100%;
+    height: 1.6rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .left-container {
+      width: 3.6rem;
+      margin-left: 0.3rem;
+      font-size: 0.36rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      .icon {
+        font-size: 0.6rem;
+      }
+      .play {
+        margin-left: 0.2rem;
+      }
+    }
+    .add {
+      padding: 0.2rem;
+      color: #fff;
+      border-radius: 0.2rem;
+      background-image: -webkit-linear-gradient(left bottom, #fb2c61, #fac362);
+      margin-right: 0.3rem;
+    }
+  }
+  .song-container {
+    width: 100%;
+    height: 1.4rem;
+    border-top: 0.02rem solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .index {
+      margin-left: 0.4rem;
+    }
+    .song-name {
+      width: 4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      justify-content: space-around;
+      .name {
+        width: 100%;
+        font-weight: 700;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .author {
+        width: 100%;
+        color: #ccc;
+        font-size: 0.28rem;
+        margin-top: 0.1rem;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+    .tool-btn {
+      width: 1.4rem;
+      margin-right: 0.28rem;
+      font-size: 0.44rem;
+      color: #ccc;
+      .icon {
+        float: right;
+        margin-left: 0.3rem;
+      }
+    }
+  }
+}
+</style>
