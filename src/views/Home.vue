@@ -1,7 +1,7 @@
   <!-- HOME页面 -->
 <template>
   <!-- 头部导航条 -->
-  <TopNav />
+  <TopNav :select="1" />
   <!-- 轮播图 -->
   <SwiperTop />
   <!-- 图标导航条 -->

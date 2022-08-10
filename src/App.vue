@@ -3,13 +3,14 @@
   <!-- 页面显示 -->
   <router-view />
   <!-- 底部播放器 -->
-  <MusicPlay class="music" />
+  <MusicPlay class="music" v-show="$store.state.isFooterMusic" />
 </template>
 
 <script>
 import MusicPlay from "@/components/music/MusicPlay.vue";
 export default {
   name: "App",
+  setup() {},
   components: {
     MusicPlay,
   },

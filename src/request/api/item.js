@@ -12,7 +12,7 @@ export function getItemList(id) {
 export function getMusicList(id) {
     return service({
         method: 'GET',
-        url: `/playlist/track/all?id=${id}&limit=20`
+        url: `/playlist/track/all?id=${id}`
     })
 }
 

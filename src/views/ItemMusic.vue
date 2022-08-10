@@ -9,14 +9,13 @@
 </template>
 
 <script>
-import { useRoute } from "vue-router";
 import { reactive, onMounted, toRefs } from "vue";
-import { getItemList } from "@/request/api/item.js";
 
 import ItemTopNav from "@/components/item/ItemTopNav.vue";
 import ItemTop from "@/components/item/ItemTop.vue";
 import ItemList from "@/components/item/ItemList.vue";
 import { useStore } from "vuex";
+import { useRoute } from "vue-router";
 export default {
   setup() {
     const store = useStore();
@@ -24,22 +23,17 @@ export default {
       playlist: {},
       isUpdate: false,
     });
+    // 从vuex里面取参数
     const { isPopShow } = toRefs(store.state);
+    const {
+      getItemListA: [getItemListA],
+    } = store._actions;
+
     // 生命周期,获取当前表单res
     onMounted(async () => {
-      const id = useRoute().query.id;
-      if (!sessionStorage.getItem("list" + id)) {
-        let res = await getItemList(id);
-        console.log("获取表单res如下---↓");
-        console.log(res);
-        state.playlist = res.data.playlist;
-        state.isUpdate = true;
-        sessionStorage.setItem("list" + id, JSON.stringify(res.data.playlist));
-      } else {
-        console.log("从session获取表单中");
-        state.playlist = JSON.parse(sessionStorage.getItem("list" + id));
-        state.isUpdate = true;
-      }
+      const { playlist, isUpdate } = await getItemListA(useRoute().query.id);
+      state.playlist = playlist;
+      state.isUpdate = isUpdate;
     });
     return { state, isPopShow };
   },

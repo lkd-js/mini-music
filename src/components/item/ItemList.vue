@@ -6,7 +6,7 @@
       <div class="left-container">
         <span class="icon icon-play-circle"></span>
         <span class="play">播放全部</span>
-        <span class="all">(共{{ mystate.musiclist.length }}首)</span>
+        <span class="all">(共{{ state.musiclist.length }}首)</span>
       </div>
       <span class="add"
         >+&nbsp;{{ getNum(playlist.subscribedCount) }}&nbsp;收藏</span
@@ -15,7 +15,7 @@
     <!-- 歌曲 -->
     <div
       class="song-container"
-      v-for="(song, index) in mystate.musiclist"
+      v-for="(song, index) in state.musiclist"
       :key="song.name"
     >
       <!-- 索引 -->
@@ -38,26 +38,27 @@
 import { onMounted, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
-import { getMusicList } from "@/request/api/item.js";
 export default {
   setup() {
-    const store = useStore();
+    const state = reactive({
+      musiclist: [],
+    });
 
     // 获取需要用到的mutation
+    const store = useStore();
     const {
       updatePlayList: [updatePlayList],
       updatePlayIndex: [updatePlayIndex],
     } = store._mutations;
-
+    const {
+      getMusicListA: [getMusicListA],
+    } = store._actions;
     // 自定义属性
-    const mystate = reactive({
-      musiclist: [],
-    });
 
     // 自定义函数
     // 更新歌曲到当前播放
     const addList = (index) => {
-      updatePlayList(mystate.musiclist);
+      updatePlayList(state.musiclist);
       updatePlayIndex(index);
     };
     // 收藏数处理
@@ -67,20 +68,10 @@ export default {
 
     // 定义生命周期函数,获取歌单列表
     onMounted(async () => {
-      const id = useRoute().query.id;
-      if (!sessionStorage.getItem("music" + id)) {
-        let res = await getMusicList(id);
-        console.log("获取歌单res如下---↓");
-        console.log(res);
-        mystate.musiclist = res.data.songs;
-        sessionStorage.setItem("music" + id, JSON.stringify(res.data.songs));
-      } else {
-        console.log("从session获取歌单中");
-        mystate.musiclist = JSON.parse(sessionStorage.getItem("music" + id));
-      }
+      state.musiclist = await getMusicListA(useRoute().query.id);
     });
 
-    return { mystate, getNum, addList, updatePlayList, updatePlayIndex };
+    return { state, getNum, addList, updatePlayList, updatePlayIndex };
   },
   props: ["playlist"],
 };

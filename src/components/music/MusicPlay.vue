@@ -14,7 +14,7 @@
     <!-- 歌曲名字部分，跑马灯，点击弹出歌曲详情 -->
     <div class="song-name" @click="updatePopShow(true)">
       <van-notice-bar :text="playMusicList[playIndex].name" class="name" />
-      <span class="notice">滑动切换</span>
+      <span class="notice"></span>
     </div>
     <!-- 播放模块 -->
     <div class="tool-btn">
@@ -28,7 +28,7 @@
         class="icon icon-pause-circle"
         @click="play()"
       ></span>
-      <span class="icon icon-indent"></span>
+      <span class="icon icon-indent" @click="$router.push('/list')"></span>
     </div>
     <!-- 播放器 -->
     <audio
@@ -42,7 +42,11 @@
       position="bottom"
       :style="{ height: '100%', width: '100%' }"
     >
-      <MusicPop :musicMsg="playMusicList[playIndex]" :play="play" />
+      <MusicPop
+        :musicMsg="playMusicList[playIndex]"
+        :play="play"
+        :timeChange="timeChange"
+      />
     </van-popup>
   </div>
 </template>
@@ -54,23 +58,27 @@ import { useStore } from "vuex";
 
 export default {
   setup() {
+    // 获取store 中的state 并添加ref
+    // 获取需要用到的state和 getters
     const store = useStore();
-
-    // 获取store 中的states 并添加ref
-    // 获取需要用到的state
-    const { playMusicList, playIndex, isBtnShow, isPopShow, curTime } = toRefs(
-      store.state
-    );
+    const { playMusicList, playIndex, isBtnShow, isPopShow, curTime, fulTime } =
+      toRefs(store.state);
     const getTimeRow = toRef(store.getters, "getTimeRow");
+    const getTimeRowMix = toRef(store.getters, "getTimeRowMix");
 
-    // 获取需要用到的mutation
+    // 获取需要用到的mutations和actions
     const {
       updateBtnShow: [updateBtnShow],
       updatePopShow: [updatePopShow],
       updateTime: [updateTime],
       updateMusicRow: [updateMusicRow],
       updateMusicRow2: [updateMusicRow2],
+      updateMusicRow3: [updateMusicRow3],
+      updateFulTime: [updateFulTime],
     } = store._mutations;
+    const {
+      nextGo: [nextGo],
+    } = store._actions;
 
     // 获取需要用到的actions;
     const {
@@ -93,50 +101,81 @@ export default {
 
     // 更新当前歌词行数
     const retNum = () => {
-      let arr = getTimeRow.value.time1.filter((v) => v < curTime.value);
-      let num = arr.length - 1;
+      const arr = getTimeRow.value.time1.filter((v) => v < curTime.value);
+      const num = arr.length - 1;
       updateMusicRow(num);
     };
     const retNum2 = () => {
-      let arr = getTimeRow.value.time2.filter((v) => v < curTime.value);
-      let num2 = arr.length - 1;
+      const arr = getTimeRow.value.time2.filter((v) => v < curTime.value);
+      const num2 = arr.length - 1;
       updateMusicRow2(num2);
     };
+    const retNum3 = () => {
+      const arr = getTimeRowMix.value.time3.filter((v) => v < curTime.value);
+      const num3 = arr.length - 1;
+      updateMusicRow3(num3);
+    };
 
+    // 改变时间
+    const timeChange = (range) => {
+      audio.value.currentTime = fulTime.value * (range / 100);
+    };
+    // 更新时间
     const timeUp = () => {
-      let timeNow = audio.value.currentTime * 1000;
+      let timeNow =
+        (audio.value.currentTime && audio.value.currentTime * 1000) || 0;
       updateTime(timeNow);
+      updateFulTime(
+        (audio.value.duration && audio.value.duration) || fulTime.value
+      );
       retNum();
       retNum2();
+      retNum3();
     };
 
     // 生命周期，获取歌词
     onUpdated(() => {
-      console.log("===更新歌词===");
+      console.log("===更新歌词和时间===");
+      updateFulTime(
+        (audio.value.duration && audio.value.duration) || fulTime.value
+      );
       getMusicTxt(playMusicList.value[playIndex.value].id);
     });
     onMounted(() => {
-      console.log("===获取默认歌词===");
-      // let listObj = getTimeRow.value;
-      // console.log("listObj=====");
-      // console.log(listObj);
+      console.log("===获取默认歌词和时间===");
+      updateFulTime(
+        (audio.value.duration && audio.value.duration) || fulTime.value
+      );
       getMusicTxt(playMusicList.value[playIndex.value].id);
     });
     //  添加监听器，控制播放状态
     watch(playIndex, () => {
+      // 更新播放器
       audio.value.autoplay = true;
+      // 更新时间
+      updateFulTime(
+        (audio.value.duration && audio.value.duration) || fulTime.value
+      );
+      // 更新按钮显示
       if (audio.value.paused) {
         updateBtnShow(false);
       }
     });
     watch(playMusicList, () => {
+      // 切歌单自动播放
       if (isBtnShow) {
         audio.value.autoplay = true;
         updateBtnShow(false);
       }
     });
+    watch(curTime, () => {
+      // 播放完毕自动切歌
+      if (curTime.value / 1000 >= fulTime.value) {
+        nextGo(1);
+        updateTime(0);
+      }
+    });
 
-    // 导出数据
     return {
       audio,
       playMusicList,
@@ -149,6 +188,7 @@ export default {
       updatePopShow,
       updateTime,
       timeUp,
+      timeChange,
     };
   },
   components: { MusicPop },

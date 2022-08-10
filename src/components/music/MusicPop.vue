@@ -16,7 +16,7 @@
     <!-- 中间部分 -->
     <div class="contents-container">
       <!-- 默认CD模式 -->
-      <div class="default-view" v-show="mystates.isPlayView">
+      <div class="default-view" v-show="state.isPlayView">
         <!-- 杆 -->
         <img
           :class="{ bar: true, active: isBtnShow }"
@@ -42,21 +42,38 @@
         />
       </div>
       <!-- 歌词模式 -->
-      <div class="music-view" v-show="!mystates.isPlayView" ref="spans">
-        <!-- 返回按钮，点击切回CD模式 -->
-        <span class="checkLang icon-circle" @click="checkView()"></span>
+      <div
+        class="music-view"
+        v-show="!state.isPlayView"
+        ref="spans"
+        @click="checkView()"
+      >
         <!-- 翻译按钮，点击切换歌词 -->
-        <span class="checkLang icon-language" @click="checkText()"></span>
+        <span
+          class="checkLang icon-circle"
+          @click.stop="checkText()"
+          v-if="state.isLangDef == 0"
+          >翻译</span
+        >
+        <span
+          class="checkLang icon-c"
+          @click.stop="checkText()"
+          v-if="state.isLangDef == 1"
+          >翻译</span
+        >
+        <span
+          class="checkLang icon-language"
+          @click.stop="checkText()"
+          v-if="state.isLangDef == 2"
+          >翻译</span
+        >
         <!-- 原歌词（英文，日文，中文...） -->
         <div class="txt-container">
-          <!-- 标题作者 -->
-          <span>歌名：{{ musicMsg.name }}</span>
-          <span>作者：{{ authorNames() }}</span>
           <!-- 歌词内容 -->
           <div
             v-for="(conv1, i1) in getTimeRow.con1"
             :key="`${i1}xx`"
-            v-show="mystates.isLangDef"
+            v-show="state.isLangDef == 0"
             :class="{
               span: true,
               active: i1 == musicRow,
@@ -70,13 +87,28 @@
           <div
             v-for="(conv2, i2) in getTimeRow.con2"
             :key="`${i2}yy`"
-            v-show="!mystates.isLangDef"
+            v-show="state.isLangDef == 1"
             :class="{
               span: true,
               active: i2 == musicRow2,
             }"
           >
             {{ conv2 }}
+          </div>
+        </div>
+        <!-- 混合歌词 -->
+        <div class="txt-container">
+          <div
+            v-for="(conv3, i3) in getTimeRowMix.con3"
+            :key="`${i3}zz`"
+            v-show="state.isLangDef == 2"
+            :class="{
+              span: true,
+              active: i3 == musicRow3,
+            }"
+          >
+            {{ conv3[0] }}<br />
+            {{ conv3[1] }}
           </div>
         </div>
       </div>
@@ -90,17 +122,26 @@
         <van-icon class="iconv" name="comment-o" badge="99+" />
         <van-icon class="iconv" name="ellipsis" dot />
       </div>
+      <!-- 进度条模块 -->
+      <div class="ranges">
+        <div class="cur-time">{{ state.timeStr }}</div>
+        <input
+          type="range"
+          name="timeIng"
+          class="progress"
+          id="timing"
+          min="0"
+          max="100"
+          @change="updateTiming()"
+          v-model="state.pers"
+        />
+        <div class="ful-time">{{ state.timeStrM }}</div>
+      </div>
+
       <!-- 播放模块 -->
       <div class="player">
         <span class="icon icon-history"></span>
-        <span
-          class="icon icon-step-backward"
-          @click="
-            updatePlayIndex(
-              playIndex - 1 >= 0 ? playIndex - 1 : playMusicList.length - 1
-            )
-          "
-        ></span>
+        <span class="icon icon-step-backward" @click="nextGo(-1)"></span>
         <span
           v-show="isBtnShow"
           class="icon iconp icon-play-circle"
@@ -111,15 +152,8 @@
           class="icon iconp icon-pause-circle"
           @click="play()"
         ></span>
-        <span
-          class="icon icon-step-forward"
-          @click="
-            updatePlayIndex(
-              playIndex + 1 < playMusicList.length ? playIndex + 1 : 0
-            )
-          "
-        ></span>
-        <span class="icon icon-indent"></span>
+        <span class="icon icon-step-forward" @click="nextGo(1)"></span>
+        <span class="icon icon-indent" @click="clickList"></span>
       </div>
     </div>
   </div>
@@ -128,38 +162,44 @@
 <script>
 import { reactive, toRefs, ref, toRef, watch } from "vue";
 import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
 export default {
   setup(props) {
-    console.log(props.musicMsg);
-    const store = useStore();
-
+    // 自定义属性
+    const state = reactive({
+      isPlayView: true,
+      isLangDef: 0,
+      timeStr: "00:00",
+      timeStrM: "99:99",
+      pers: 0,
+    });
     // 获取歌词spanDOM
     const spans = ref(null);
 
+    const store = useStore();
+    const router = useRouter();
     // 获取需要的state和getters
     const {
       isBtnShow,
       curTime,
       musicRow,
       musicRow2,
+      musicRow3,
       playIndex,
-      playMusicList,
+      fulTime,
     } = toRefs(store.state);
 
     const getTimeRow = toRef(store.getters, "getTimeRow");
+    const getTimeRowMix = toRef(store.getters, "getTimeRowMix");
 
-    // 获取需要用到的mutation
+    // 获取需要用到的mutation,actions
     const {
       updatePopShow: [updatePopShow],
-      updatePlayIndex: [updatePlayIndex],
     } = store._mutations;
-
-    // 自定义属性
-    const mystates = reactive({
-      isPlayView: true,
-      isLangDef: true,
-    });
+    const {
+      nextGo: [nextGo],
+    } = store._actions;
 
     // 获取全部作者名并进行拼接
     const authorNames = () => {
@@ -173,30 +213,72 @@ export default {
     // 切换CD和歌词
     const checkView = () => {
       console.log("---切换view---");
-      mystates.isPlayView = !mystates.isPlayView;
+      state.isPlayView = !state.isPlayView;
     };
 
     // 翻译歌词
     const checkText = () => {
       console.log("---切换歌词---");
-      mystates.isLangDef = !mystates.isLangDef;
+      state.isLangDef++;
+      state.isLangDef = state.isLangDef % 3;
     };
-    // 歌詞滾動
+
+    // 进度条
+    const perTime = () => {
+      const time = parseInt(curTime.value / 1000);
+      const pers = (time / fulTime.value) * 100;
+      state.pers = pers;
+    };
+    // 进度条时间控制
+    const updateTiming = () => {
+      // console.log(state.pers);
+      props.timeChange(state.pers);
+    };
+    // 时间显示换算
+    const testTime = (time) => {
+      const min = parseInt(time / 60);
+      const sec = time % 60;
+      const timeStr =
+        String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+      return timeStr;
+    };
+    const clickList = () => {
+      updatePopShow(false);
+      router.push("/list");
+    };
+
+    // 监听当前播放时间
     watch(curTime, () => {
+      // 进度条更新
+      perTime();
+      // 歌词滚动
       const acEl = document.querySelectorAll(".txt-container .active");
-      // console.log(acEl);
       let hight;
-      if (mystates.isLangDef) {
+      if (state.isLangDef == 0) {
         acEl[0] == null ? (hight = 0) : (hight = acEl[0].offsetTop);
         spans.value.scrollTop = hight - 250;
-      } else {
+      } else if (state.isLangDef == 1) {
         acEl[1] == null ? (hight = 0) : (hight = acEl[1].offsetTop);
         spans.value.scrollTop = hight - 250;
+      } else {
+        acEl[2] == null ? (hight = 0) : (hight = acEl[2].offsetTop);
+        spans.value.scrollTop = hight - 250;
       }
+      // 获取并显示总时间
+      const timeM = parseInt(fulTime.value);
+      state.timeStrM = testTime(timeM);
+
+      // 获取并显示当前时间
+      const time = parseInt(curTime.value / 1000);
+      state.timeStr = testTime(time);
+    });
+    watch(playIndex, () => {
+      // 切歌更新进度条
+      perTime();
     });
 
     return {
-      mystates,
+      state,
       spans,
       authorNames,
       checkView,
@@ -204,14 +286,16 @@ export default {
       isBtnShow,
       musicRow,
       musicRow2,
+      musicRow3,
       updatePopShow,
       getTimeRow,
-      updatePlayIndex,
-      playIndex,
-      playMusicList,
+      getTimeRowMix,
+      nextGo,
+      updateTiming,
+      clickList,
     };
   },
-  props: ["musicMsg", "play"],
+  props: ["musicMsg", "play", "timeChange"],
 };
 </script>
 
@@ -319,36 +403,35 @@ export default {
         width: 0.8rem;
         height: 0.8rem;
         border-radius: 50%;
+        background-color: #ccc;
         border: 1px solid #ccc;
         line-height: 0.8rem;
         text-align: center;
         font-size: 0.5rem;
         z-index: 99;
         position: fixed;
-        top: 1.5rem;
-      }
-      .icon-language {
-        right: 0.6rem;
-      }
-      .icon-arrow-left {
-        left: 0.6rem;
+        top: 2.2rem;
+        right: 1rem;
       }
       .txt-container {
         width: 100%;
-        transition: all 1s ease;
-        .span,
-        span {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        .span {
           width: 100%;
-          height: 0.6rem;
+          height: 0.8rem;
+          color: #ccc;
           font-size: 0.28rem;
-          line-height: 0.6rem;
+          line-height: 0.4rem;
           text-align: center;
           margin-top: 0.2rem;
+          white-space: pre-line;
         }
         .span.active {
           font-size: 0.36rem;
           font-weight: bolder;
-          color: rgba(0, 30, 255, 0.903);
+          color: rgb(0, 115, 255);
         }
       }
     }
@@ -359,7 +442,7 @@ export default {
       width: 100%;
       height: 1.6rem;
       position: fixed;
-      bottom: 1.6rem;
+      bottom: 1.4rem;
       left: 0;
       background-color: rgba(34, 33, 33, 0.555);
       display: flex;
@@ -370,18 +453,41 @@ export default {
         font-size: 0.6rem;
       }
     }
+    .ranges {
+      width: 100%;
+      height: 1.4rem;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      position: fixed;
+      bottom: 2.9rem;
+      z-index: 999;
+      .cur-time,
+      .ful-time {
+        text-align: center;
+        z-index: 999;
+        padding: 0.1rem 0.2rem;
+        border-radius: 0.06rem;
+        background-color: rgba(30, 27, 27, 0.575);
+      }
+      .progress {
+        width: 60%;
+        z-index: 9999;
+        margin-bottom: 0.05rem;
+      }
+    }
+
     .player {
       width: 100%;
-      height: 1.6rem;
+      height: 1.4rem;
       background-color: rgba(34, 33, 33, 0.555);
-      border-top: 1px solid #ccc;
       position: fixed;
       bottom: 0;
       left: 0;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      z-index: 9;
+      z-index: 999;
       .icon {
         font-size: 0.5rem;
       }

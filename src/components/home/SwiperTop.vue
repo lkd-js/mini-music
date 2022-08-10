@@ -2,7 +2,7 @@
   <!-- home轮播图 -->
   <div id="swiper-container">
     <van-swipe :autoplay="3000" lazy-render indicator-color="#fac362">
-      <van-swipe-item v-for="image in mystate.images" :key="image">
+      <van-swipe-item v-for="image in state.images" :key="image">
         <img :src="image.pic" />
       </van-swipe-item>
     </van-swipe>
@@ -11,33 +11,27 @@
 
 <script>
 import { reactive, onMounted } from "vue";
-import { getBanner } from "@/request/api/home.js";
+import { useStore } from "vuex";
 export default {
   setup() {
     // 自定义属性
-    const mystate = reactive({
+    const state = reactive({
       images: [
         "https://fastly.jsdelivr.net/npm/@vant/assets/apple-1.jpeg",
         "https://fastly.jsdelivr.net/npm/@vant/assets/apple-2.jpeg",
       ],
     });
 
+    const store = useStore();
+    const {
+      getBannerA: [getBannerA],
+    } = store._actions;
     // 自定义生命周期函数，获取轮播图res并存入session
     onMounted(async () => {
-      let res;
-      if (!sessionStorage.getItem("bannerImg")) {
-        res = await getBanner();
-        console.log("获取banner的res如下---↓");
-        console.log(res);
-        mystate.images = res.data.banners;
-        sessionStorage.setItem("bannerImg", JSON.stringify(res.data.banners));
-      } else {
-        console.log("从session获取banner中");
-        mystate.images = JSON.parse(sessionStorage.getItem("bannerImg"));
-      }
+      state.images = await getBannerA();
     });
 
-    return { mystate };
+    return { state };
   },
 };
 </script>

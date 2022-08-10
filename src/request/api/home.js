@@ -9,7 +9,7 @@ export function getBanner() {
     })
 }
 // 获取推荐歌单
-export function getMusicList() {
+export function getMusicListHome() {
     return service({
         method: 'GET',
         url: '/personalized?limit=10'

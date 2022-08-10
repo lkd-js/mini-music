@@ -11,7 +11,7 @@
       <!-- 以轮播图（固定）形式进行展示 -->
       <van-swipe :loop="false" :width="150" :show-indicators="false">
         <!-- 单个歌单元素 -->
-        <van-swipe-item v-for="list in mystate.list" :key="list.name">
+        <van-swipe-item v-for="list in state.list" :key="list.name">
           <!-- 点击a标签前往/itemmusic?id=xxx -->
           <router-link :to="{ path: '/itemmusic', query: { id: list.id } }">
             <img :src="list.picUrl" />
@@ -29,14 +29,17 @@
 
 <script>
 import { reactive, onMounted } from "vue";
-import { getMusicList } from "@/request/api/home.js";
+import { useStore } from "vuex";
 export default {
   setup() {
     // 自定义属性
-    const mystate = reactive({
+    const state = reactive({
       list: [],
     });
-
+    const store = useStore();
+    const {
+      getMusicListHomeA: [getMusicListHomeA],
+    } = store._actions;
     // 自定义函数
     // 将播放数据进行缩短处理
     const getNum = (num) => {
@@ -49,23 +52,10 @@ export default {
 
     // 自定义生命周期函数,获取复数的歌单res
     onMounted(async () => {
-      let res;
-      if (!sessionStorage.getItem("musicListData")) {
-        res = await getMusicList();
-        console.log("获取歌单图片集res如下---↓");
-        console.log(res);
-        mystate.list = res.data.result;
-        sessionStorage.setItem(
-          "musicListData",
-          JSON.stringify(res.data.result)
-        );
-      } else {
-        console.log("从session获取歌单图片集中");
-        mystate.list = JSON.parse(sessionStorage.getItem("musicListData"));
-      }
+      state.list = await getMusicListHomeA();
     });
 
-    return { mystate, getNum };
+    return { state, getNum };
   },
 };
 </script>
