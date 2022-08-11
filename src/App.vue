@@ -10,7 +10,6 @@
 import MusicPlay from "@/components/music/MusicPlay.vue";
 export default {
   name: "App",
-  setup() {},
   components: {
     MusicPlay,
   },

@@ -17,7 +17,15 @@
           <span>{{ playlist.creator.nickname }}</span>
         </div>
         <!-- 歌单介绍 -->
-        <div class="msg">{{ playlist.description }}</div>
+        <div class="msg" @click="showPopup">
+          {{ playlist.description }}
+        </div>
+        <van-popup
+          v-model:show="show"
+          position="top"
+          :style="{ height: '30%', backgroundColor: '#1989fa' }"
+          >{{ playlist.description }}
+        </van-popup>
       </div>
     </div>
     <!-- 扩展按钮（待开发） -->
@@ -47,7 +55,18 @@
 </template>
 
 <script>
+import { ref } from "vue";
 export default {
+  setup() {
+    const show = ref(false);
+    const showPopup = () => {
+      show.value = true;
+    };
+    return {
+      show,
+      showPopup,
+    };
+  },
   props: ["playlist"],
 };
 </script>

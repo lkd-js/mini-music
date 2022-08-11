@@ -118,19 +118,20 @@ export default {
 
     // 改变时间
     const timeChange = (range) => {
-      audio.value.currentTime = fulTime.value * (range / 100);
+      if (audio.value.currentTime)
+        audio.value.currentTime = fulTime.value * (range / 100);
     };
     // 更新时间
     const timeUp = () => {
+      retNum();
+      retNum2();
+      retNum3();
       let timeNow =
         (audio.value.currentTime && audio.value.currentTime * 1000) || 0;
       updateTime(timeNow);
       updateFulTime(
         (audio.value.duration && audio.value.duration) || fulTime.value
       );
-      retNum();
-      retNum2();
-      retNum3();
     };
 
     // 生命周期，获取歌词

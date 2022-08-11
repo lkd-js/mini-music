@@ -38,6 +38,7 @@
 import { onMounted, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
+import { getMusicListA } from "@/ultils/request";
 export default {
   setup() {
     const state = reactive({
@@ -50,9 +51,6 @@ export default {
       updatePlayList: [updatePlayList],
       updatePlayIndex: [updatePlayIndex],
     } = store._mutations;
-    const {
-      getMusicListA: [getMusicListA],
-    } = store._actions;
     // 自定义属性
 
     // 自定义函数

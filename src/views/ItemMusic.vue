@@ -16,6 +16,7 @@ import ItemTop from "@/components/item/ItemTop.vue";
 import ItemList from "@/components/item/ItemList.vue";
 import { useStore } from "vuex";
 import { useRoute } from "vue-router";
+import { getItemListA } from "@/ultils/request";
 export default {
   setup() {
     const store = useStore();
@@ -25,9 +26,6 @@ export default {
     });
     // 从vuex里面取参数
     const { isPopShow } = toRefs(store.state);
-    const {
-      getItemListA: [getItemListA],
-    } = store._actions;
 
     // 生命周期,获取当前表单res
     onMounted(async () => {

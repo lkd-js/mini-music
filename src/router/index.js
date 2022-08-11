@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router' //createWebHashHistory
+import { createRouter, createWebHashHistory } from 'vue-router' //createWebHistory,
 import store from '@/store';
 import HomeView from '../views/Home.vue'
 
@@ -53,8 +53,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  // history: createWebHashHistory(),
+  // history: createWebHistory(process.env.BASE_URL),   //项目开发时使用
+  history: createWebHashHistory(),   //打包程序时使用
   routes
 })
 

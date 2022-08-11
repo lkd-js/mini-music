@@ -60,6 +60,7 @@
 <script>
 import { reactive, onMounted, onUpdated, toRefs } from "vue";
 import { useStore } from "vuex";
+import { getHotListA, getSearchA } from "@/ultils/request";
 export default {
   setup() {
     const state = reactive({
@@ -77,8 +78,6 @@ export default {
       updatePlayList: [updatePlayList],
     } = store._mutations;
     const {
-      getHotListA: [getHotListA],
-      getSearchA: [getSearchA],
       nextGo: [nextGo],
     } = store._actions;
 

@@ -29,17 +29,13 @@
 
 <script>
 import { reactive, onMounted } from "vue";
-import { useStore } from "vuex";
+import { getMusicListHomeA } from "@/ultils/request";
 export default {
   setup() {
     // 自定义属性
     const state = reactive({
       list: [],
     });
-    const store = useStore();
-    const {
-      getMusicListHomeA: [getMusicListHomeA],
-    } = store._actions;
     // 自定义函数
     // 将播放数据进行缩短处理
     const getNum = (num) => {

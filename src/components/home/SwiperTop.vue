@@ -11,7 +11,7 @@
 
 <script>
 import { reactive, onMounted } from "vue";
-import { useStore } from "vuex";
+import { getBannerA } from "@/ultils/request";
 export default {
   setup() {
     // 自定义属性
@@ -21,11 +21,6 @@ export default {
         "https://fastly.jsdelivr.net/npm/@vant/assets/apple-2.jpeg",
       ],
     });
-
-    const store = useStore();
-    const {
-      getBannerA: [getBannerA],
-    } = store._actions;
     // 自定义生命周期函数，获取轮播图res并存入session
     onMounted(async () => {
       state.images = await getBannerA();

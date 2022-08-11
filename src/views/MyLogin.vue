@@ -7,48 +7,80 @@
       v-model="state.phone"
       placeholder="请输入手机号"
     />
-    <div class="yzm">
-      <input type="text" v-model="state.password" placeholder="请输入验证码" />
-      <button @click.stop="getYZM()" v-show="!state.isSend">获取验证码</button>
-      <button v-show="state.isSend">再次获取</button>
+    <input
+      type="text"
+      class="number"
+      v-model="state.cap"
+      placeholder="请输入验证码"
+    />
+    <div class="time-container number" v-show="state.isTimeUp">
+      <input type="text" class="time-up" v-model="state.time" disabled />
+      <input
+        type="text"
+        class="time-hold"
+        placeholder="秒后可重新获取"
+        disabled
+      />
     </div>
+
+    <input
+      type="button"
+      class="number"
+      value="点击获取验证码"
+      v-show="!state.isTimeUp"
+      @click="setTime()"
+    />
     <button @click.stop="getLogin()" class="login">点击登录</button>
   </div>
 </template>
 
 <script>
-import { reactive } from "@vue/reactivity";
-import { getLoginYZM, getLoginRes } from "@/request/api/login";
+import { reactive } from "vue";
+import { useStore } from "vuex";
+import { getCapRes } from "@/request/api/login";
 export default {
   setup() {
     const state = reactive({
       phone: "",
-      password: "",
-      isSend: false,
+      cap: "",
       time: 60,
+      isTimeUp: false,
     });
-    // 设置定时装置
-    const setTime = () => {
-      console.log("ksby");
-    };
-    const getYZM = async () => {
-      const res = await getLoginYZM(state.phone);
-      if (res.data.code == 200) {
-        state.isSend = true;
-        setTime();
-      } else {
-        alert(res.data.message);
-      }
-    };
+
+    const store = useStore();
+    const {
+      login: [login],
+    } = store._actions;
+    //登录
     const getLogin = async () => {
-      const res = await getLoginRes(state.phone, state.password);
+      let res = await login({ phone: state.phone, cap: state.cap });
+      console.log("获取到全局请求");
       console.log(res);
+    };
+    const setTime = async () => {
+      state.isTimeUp = true;
+      let timer = setInterval(() => {
+        if (state.time > 0) {
+          state.time--;
+        } else {
+          clearInterval(timer);
+          timer = null;
+          state.isTimeUp = false;
+          state.time = 60;
+        }
+      }, 1000);
+      await getCap();
+    };
+    const getCap = async () => {
+      let res = getCapRes(state.phone);
+      console.log(res);
+      return res;
     };
 
     return {
       state,
       getLogin,
-      getYZM,
+      setTime,
     };
   },
 };
@@ -80,25 +112,21 @@ export default {
     border: none;
     text-indent: 0.2rem;
   }
-  .yzm {
-    width: 60%;
-    height: 1rem;
+  .time-container {
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    background-color: #ccc;
     input {
-      width: 60%;
-      height: 100%;
-      outline: none;
-      border: none;
-      text-indent: 0.2rem;
-    }
-    button {
-      height: 100%;
-      width: 2rem;
-      border: none;
       background-color: #ccc;
-      color: #000;
+      height: 100%;
+      border: none;
+      text-align: center;
+    }
+    .time-up {
+      width: 20%;
+    }
+    .time-hold {
+      width: 60%;
     }
   }
   .login {
