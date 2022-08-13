@@ -163,8 +163,12 @@ export default createStore({
     },
     async login(context, { phone, cap }) {
       let res = await getLoginRes(phone, cap);
-      console.log('全局请求');
       console.log(res);
+      if (res.data.code == 200) {
+        context.commit('updateIsLogin', true)
+      } else {
+        console.log('登录错误');
+      }
       return res
     }
   },

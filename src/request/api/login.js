@@ -5,14 +5,26 @@ import service from "..";
 export function getCapRes(number) {
     return service({
         method: 'GET',
-        url: `/captcha/sent?phone=${number}`
+        url: `/captcha/sent`,
+        params: {
+            phone: number,
+            timestamp: new Date().getTime()
+        }
+
     })
 }
 
 // 验证码登录
 export function getLoginRes(number, cap) {
     return service({
-        method: 'GET',
-        url: `/login/cellphone?phone=${number}&captcha=${cap}`
+        method: 'POST',
+        url: `/login/cellphone`,
+        params: {
+            phone: number,
+            captcha: cap,
+            timestamp: new Date().getTime()
+        },
+        withCredentials: true
     })
 }
+

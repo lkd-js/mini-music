@@ -30,14 +30,20 @@
       v-show="!state.isTimeUp"
       @click="setTime()"
     />
-    <button @click.stop="getLogin()" class="login">点击登录</button>
+    <input
+      type="button"
+      value="点击登录"
+      @click.stop="getLogin()"
+      class="login"
+    />
   </div>
 </template>
 
 <script>
-import { reactive } from "vue";
+import { reactive, toRefs } from "vue";
 import { useStore } from "vuex";
 import { getCapRes } from "@/request/api/login";
+import { useRouter } from "vue-router";
 export default {
   setup() {
     const state = reactive({
@@ -48,14 +54,18 @@ export default {
     });
 
     const store = useStore();
+    const { isLogin } = toRefs(store.state);
     const {
       login: [login],
     } = store._actions;
     //登录
     const getLogin = async () => {
       let res = await login({ phone: state.phone, cap: state.cap });
-      console.log("获取到全局请求");
+      console.log("接收的res");
       console.log(res);
+      if (isLogin.value == true) {
+        useRouter().push("/user");
+      }
     };
     const setTime = async () => {
       state.isTimeUp = true;
@@ -72,9 +82,13 @@ export default {
       await getCap();
     };
     const getCap = async () => {
-      let res = getCapRes(state.phone);
+      let res = await getCapRes(state.phone);
       console.log(res);
-      return res;
+      if (res.data.code != 200) {
+        console.log(res.data.message);
+      } else {
+        return res;
+      }
     };
 
     return {

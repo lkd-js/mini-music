@@ -163,7 +163,6 @@ export default {
       }
     });
     watch(playMusicList, () => {
-      // 切歌单自动播放
       if (isBtnShow) {
         audio.value.autoplay = true;
         updateBtnShow(false);

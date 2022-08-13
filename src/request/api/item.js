@@ -23,3 +23,11 @@ export function getMusicLyr(id) {
         url: `/lyric?id=${id}`
     })
 }
+
+//检测歌曲权限
+export function getMusicCanPlay(id) {
+    return service({
+        method: 'GET',
+        url: `/check/music?id=${id}`
+    })
+}
